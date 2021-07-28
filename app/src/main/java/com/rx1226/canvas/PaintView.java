@@ -9,10 +9,13 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class PaintView extends View {
-    private Paint mPaint = null;
-    private Bitmap mBitmap = null;
-    private Canvas mBitmapCanvas = null;
+    private Paint paint;
+    private Bitmap bitmap;
+    private Canvas canvas;
 
     public PaintView(Context context) {
         super(context);
@@ -26,21 +29,20 @@ public class PaintView extends View {
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
-        mBitmap = Bitmap.createBitmap(w,h, Bitmap.Config.ARGB_8888);
-        mBitmapCanvas = new Canvas(mBitmap);
-        mBitmapCanvas.drawColor(Color.GRAY);
+        bitmap = Bitmap.createBitmap(w,h, Bitmap.Config.ARGB_8888);
+        canvas = new Canvas(bitmap);
     }
 
     private void init(){
-        mPaint = new Paint();
-        mPaint.setColor(Color.RED);
-        mPaint.setStrokeWidth(6);
+        paint = new Paint();
+        paint.setColor(Color.RED);
+        paint.setStrokeWidth(3);
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
-        if(mBitmap != null) {
-            canvas.drawBitmap(mBitmap, 0, 0, mPaint);
+        if(bitmap != null) {
+            canvas.drawBitmap(bitmap, 0, 0, paint);
         }
     }
 
@@ -48,7 +50,6 @@ public class PaintView extends View {
     private float startY ;
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 startX = event.getX();
@@ -57,12 +58,24 @@ public class PaintView extends View {
             case MotionEvent.ACTION_MOVE:
                 float stopX = event.getX();
                 float stopY = event.getY();
-                mBitmapCanvas.drawLine(startX, startY, stopX, stopY, mPaint);
+                canvas.drawLine(startX, startY, stopX, stopY, paint);
                 startX = event.getX();
                 startY = event.getY();
                 invalidate();//call onDraw()
                 break;
+            case MotionEvent.ACTION_UP:
+                if(isClick(startX, event.getX(), startY, event.getY())){
+                    canvas.drawPoint(startX, startY, paint);
+                    invalidate();
+                    return false;
+                }
+                break;
         }
         return true;
+    }
+
+    private static final float CLICK_THRESHOLD = 0.05f;
+    private boolean isClick(float startX, float endX, float startY, float endY) {
+        return ((Math.abs(startX - endX) < CLICK_THRESHOLD) && (Math.abs(startY - endY) < CLICK_THRESHOLD));
     }
 }
